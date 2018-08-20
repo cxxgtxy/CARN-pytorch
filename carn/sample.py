@@ -91,14 +91,17 @@ def sample(net, device, dataset, cfg):
 
         save_image(sr, sr_im_path)
         save_image(hr, hr_im_path)
+        sr, hr = sr.cpu(), hr.cpu()
+        sr, hr = sr.mul(255).clamp(0, 255).byte().permute(1, 2, 0).numpy(), hr.mul(255).clamp(0, 255).byte().permute(1, 2, 0).numpy()
+
         psnrs.append(calc_y_psnr(sr, hr))
     print("data set  %s, psnr %4.2f" %(dataset.name, np.mean(psnrs)))
         # print("Saved {} ({}x{} -> {}x{}, {:.3f}s)"
         #     .format(sr_im_path, lr.shape[1], lr.shape[2], sr.shape[1], sr.shape[2], t2-t1))
 
 def calc_y_psnr(sr, hr):
-    y_sr, y_hr = sc.rgb2ypbpr(sr)[..., 0], sc.rgb2ypbpr(hr)[..., 0]
-    measure.compare_psnr(y_sr, y_hr, data_range=1)
+    y_sr, y_hr = sc.rgb2ycbcr(sr)[..., 0], sc.rgb2ycbcr(hr)[..., 0]
+    return measure.compare_psnr(y_sr, y_hr, data_range=255)
 
 def main(cfg):
     module = importlib.import_module("model.{}".format(cfg.model))
