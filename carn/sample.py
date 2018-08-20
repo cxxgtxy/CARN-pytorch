@@ -10,6 +10,9 @@ import torch.nn as nn
 from torch.autograd import Variable
 from dataset import TestDataset
 from PIL import Image
+import skimage.measure as measure
+import skimage.color as sc
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -34,6 +37,7 @@ def save_image(tensor, filename):
 
 def sample(net, device, dataset, cfg):
     scale = cfg.scale
+    psnrs = list()
     for step, (hr, lr, name) in enumerate(dataset):
         if "DIV2K" in dataset.name:
             t1 = time.time()
@@ -87,9 +91,14 @@ def sample(net, device, dataset, cfg):
 
         save_image(sr, sr_im_path)
         save_image(hr, hr_im_path)
-        print("Saved {} ({}x{} -> {}x{}, {:.3f}s)"
-            .format(sr_im_path, lr.shape[1], lr.shape[2], sr.shape[1], sr.shape[2], t2-t1))
+        psnrs.append(calc_y_psnr(sr, hr))
+    print("data set  %s, psnr %4.2f" %(dataset.name, np.mean(psnrs)))
+        # print("Saved {} ({}x{} -> {}x{}, {:.3f}s)"
+        #     .format(sr_im_path, lr.shape[1], lr.shape[2], sr.shape[1], sr.shape[2], t2-t1))
 
+def calc_y_psnr(sr, hr):
+    y_sr, y_hr = sc.rgb2ypbpr(sr)[..., 0], sc.rgb2ypbpr(hr)[..., 0]
+    measure.compare_psnr(y_sr, y_hr, data_range=1)
 
 def main(cfg):
     module = importlib.import_module("model.{}".format(cfg.model))
