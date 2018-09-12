@@ -89,6 +89,28 @@ class EResidualBlock(nn.Module):
         return out
 
 
+class EInvertedBlock(nn.Module):
+    def __init__(self,
+                 in_channels, out_channels,
+                 group=1):
+        super(EInvertedBlock, self).__init__()
+
+        self.body = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, 1, 1, 1, groups=group),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_channels*6, out_channels*6, 3, 1, 1, groups=out_channels*6),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_channels, out_channels, 1, 1, 0),
+        )
+
+        init_weights(self.modules)
+
+    def forward(self, x):
+        out = self.body(x)
+        out = F.relu(out + x)
+        return out
+
+
 class UpsampleBlock(nn.Module):
     def __init__(self, 
                  n_channels, scale, multi_scale, 

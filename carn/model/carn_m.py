@@ -8,7 +8,8 @@ class Block(nn.Module):
                  group=1):
         super(Block, self).__init__()
 
-        self.b1 = ops.EResidualBlock(64, 64, group=group)
+        self.b1 = ops.EInvertedBlock(64, 64, group=1)
+        # self.b1 = ops.EResidualBlock(64, 64, group=group)
         self.c1 = ops.BasicBlock(64*2, 64, 1, 1, 0)
         self.c2 = ops.BasicBlock(64*3, 64, 1, 1, 0)
         self.c3 = ops.BasicBlock(64*4, 64, 1, 1, 0)
